@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Image xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:parsley="http://www.spicefactory.org/parsley"
+		  xmlns:mx="library://ns.adobe.com/flex/mx"
+		  >
+	<fx:Script>
+		<![CDATA[
+			import basegame.util.BaseGameConfiguration;
+			public var posX:int;
+			public var posY:int;
+			private var blockType:String;
+			
+			private var config:BaseGameConfiguration;
+			
+			public function setConfig(config:BaseGameConfiguration, blockType:String = ""):void{
+				this.config = config;
+				this.width = config.blockWidth;
+				this.height = config.blockWidth;
+				setBlockType(blockType);
+			}
+			
+			public function setPosition(xPos:int, yPos:int):void{
+				posX = xPos;
+				posY = yPos;
+				this.x = xPos * this.width;
+				this.y = yPos * this.height;
+			}
+			
+			public function setBlockType(t:String):void{
+				blockType = t;
+//				this.text = blockType;
+				this.source = "skins/blocks/img"+blockType + ".jpg";
+
+			}
+		]]>
+	</fx:Script>
+	
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+</s:Image>

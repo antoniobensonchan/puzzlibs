@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			xmlns:s="library://ns.adobe.com/flex/spark" 
+			xmlns:mx="library://ns.adobe.com/flex/mx"
+			xmlns:parsley="http://www.spicefactory.org/parsley"
+			>
+	
+	<fx:Script>
+		<![CDATA[
+			import basegame.event.DebugInfoUpdateEvent;
+			import basegame.util.PuzzleHelper;
+			
+			public var hashStr:String = "";
+			public var comboStr:String = "";
+			
+			private var hashMap:Object;
+			private var comboMap:Object;
+			private var maxRow:int;
+			private var maxCol:int;
+			
+			[MessageHandler]
+			public function testMsgHandler (e:DebugInfoUpdateEvent) : void {
+				hashMap = e.mapHash;
+				comboMap = e.comboHash;
+				maxRow = e.maxRow;
+				maxCol = e.maxCol;
+				getHashStrs();
+			}
+			
+			private function getHashStrs():void{
+				hashStr = "";
+				comboStr = "";
+				for(var j:int = 0; j < maxCol ; j++){
+					for(var i:int = 0; i < maxRow ; i++){
+						var hashKey:String = PuzzleHelper.getHashKeyString(i, j);
+						hashStr += (hashMap[hashKey] != null) ? hashMap[hashKey].toString() : "0";
+						
+						comboStr += (comboMap[hashKey] != null) ? comboMap[hashKey].toString() : "0";
+					}
+					hashStr += "\n";
+					comboStr += "\n"; 
+				}
+				notifyView();
+			}
+			
+			private function notifyView():void{
+				blockMaptxt.text = hashStr;
+				comboMaptxt.text = comboStr;
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:TextArea id="blockMaptxt" width="100" height="250"/>
+	<s:TextArea id="comboMaptxt" x="110" width="130" height="250"/>	
+	
+	<fx:Declarations>
+		<parsley:Configure />
+	</fx:Declarations>
+</s:Group>

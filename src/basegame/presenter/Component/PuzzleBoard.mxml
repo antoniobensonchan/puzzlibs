@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:parsley="http://www.spicefactory.org/parsley"
+		 visible="{init(pm.compState.puzzleBoardVisible)}"
+		 width="{config.boardWidth}"
+		 height="{config.boardHeight}"
+		 x="{config.boardX}"
+		 y="{config.boardY}">
+	
+	<fx:Script>
+		<![CDATA[
+			import basegame.event.BreakBlockEvent;
+			import basegame.event.BuildBlockEvent;
+			import basegame.event.DebugInfoUpdateEvent;
+			import basegame.presenter.BasePuzzlePresenter;
+			import basegame.util.BaseGameConfiguration;
+			import basegame.util.PuzzleHelper;
+			
+			import flash.net.sendToURL;
+			
+			import mx.messaging.channels.StreamingAMFChannel;
+			import mx.utils.ObjectUtil;
+			
+			[Bindable]
+			[Inject]
+			public var config:BaseGameConfiguration;
+			
+			[Bindable]
+			[Inject]
+			public var pm:BasePuzzlePresenter;
+			
+			public var blockCanvas:Canvas;
+			
+			[MessageDispatcher]
+			public var sendMessage:Function;
+			
+			public function init(vis:Boolean):Boolean{
+				if (vis == true){
+					pm.gameModel.initHash();
+				}else{
+					pm.gameModel.destroyHash();
+				}
+				return vis;
+			}
+			
+			public function buildPuzzle(bool:Boolean):Boolean{
+				if (bool){
+					addFullBlocks();
+				}else{
+					blocksPanel.removeAllChildren();
+				}
+				return bool;
+				
+			}
+			
+			protected function addFullBlocks():void{
+				var i:int = 0;
+				var j:int = 0;
+				var typeInt:Number = 0;
+				trace("add block");
+				for (j = 0; j < config.boardCol; j++){
+					for (i = 0; i < config.boardRow; i++){
+						var hashKey:String = PuzzleHelper.getHashKeyString(i, j);
+						if (pm.gameModel.blockObjectHash[hashKey] == null){
+							typeInt = Math.ceil(Math.random()*pm.config.blockType);
+							addBlock(i, j, typeInt);
+						}
+					}
+				}	
+				fullComboCheck();
+
+			}
+			
+			private var comboIndex:int = 0;
+			
+			protected function fullComboCheck():void{
+				comboIndex = 0;
+				var i:int = 0;
+				var j:int = 0;
+				var typeInt:Number = 0;
+				pm.gameModel.puzzleComboTable = new Object();
+				for (j = 0; j < config.boardCol; j++){
+					for (i = 0; i < config.boardRow; i++){
+						var hashKey:String = PuzzleHelper.getHashKeyString(i, j);
+						typeInt = pm.gameModel.blockMapList[hashKey];
+						if (typeInt != 0 && pm.gameModel.puzzleComboTable[hashKey] == null && hasComboAround(i, j, typeInt)){
+							comboIndex++;
+							searchWholeCombo(i, j, typeInt);
+						}
+					}
+				}	
+				sendMessage(new DebugInfoUpdateEvent(pm.gameModel.blockMapList, pm.gameModel.puzzleComboTable,
+					pm.config.boardRow, pm.config.boardCol));
+			}
+			
+			private function searchWholeCombo(i:int, j:int, typeInt:int):void{
+				if (pm.gameModel.puzzleComboTable[PuzzleHelper.getHashKeyString(i, j)] != null){
+					return;
+				}
+				pm.gameModel.puzzleComboTable[PuzzleHelper.getHashKeyString(i, j)] = comboIndex;
+				if (checkIfBlockEqual(i-1, j, typeInt)){
+					searchWholeCombo(i-1, j, typeInt);
+				}
+				if (checkIfBlockEqual(i, j-1, typeInt)){
+					searchWholeCombo(i, j-1, typeInt);				
+				}
+				if (checkIfBlockEqual(i+1, j, typeInt)){
+					searchWholeCombo(i+1, j, typeInt);				
+				}
+				if (checkIfBlockEqual(i, j+1, typeInt)){
+					searchWholeCombo(i, j+1, typeInt);				
+				}
+			}
+			
+			private function hasComboAround(i:int, j:int, typeInt:int):Boolean{
+				var matchBlock:int = 0;
+				if (checkIfBlockEqual(i-1, j, typeInt)){
+					matchBlock++;
+				}
+				if (checkIfBlockEqual(i, j-1, typeInt)){
+					matchBlock++;
+				}
+				if (checkIfBlockEqual(i+1, j, typeInt)){
+					matchBlock++;
+				}
+				if (checkIfBlockEqual(i, j+1, typeInt)){
+					matchBlock++;
+				}
+				return matchBlock >=2;
+			}
+			
+			private function checkIfBlockEqual(blockRow:int, blockCol:int, typeInt:int):Boolean{
+				return pm.gameModel.blockMapList[PuzzleHelper.getHashKeyString(blockRow, blockCol)] != null &&
+					pm.gameModel.blockMapList[PuzzleHelper.getHashKeyString(blockRow, blockCol)] == typeInt;
+			}
+			
+			protected function addBlock(row:int, col:int, typeInt:Number):void{
+				var block:PuzzleBlock = getNewBlock(row, col, typeInt);
+				var hashKey:String = PuzzleHelper.getHashKeyString(row, col);
+				pm.gameModel.blockObjectHash[hashKey] = block;
+				pm.gameModel.blockMapList[hashKey] = typeInt;
+				blocksPanel.addChild(block);
+			}
+			
+			private function getNewBlock(row:int, col:int, typeInt:Number):PuzzleBlock{
+				trace(row+","+col);
+				var block:PuzzleBlock = new PuzzleBlock();
+				block.setConfig(pm.config, typeInt.toString());
+				block.setPosition(row, col);
+				block.addEventListener(MouseEvent.CLICK, pm.onBlockClick);
+
+				return block;
+			}
+			
+			public function resetPuzzle():void{
+				
+			}
+			
+			public function cleanPuzzle():void{
+				
+			}
+			
+			[MessageHandler]
+			public function breakBlockEventHandling (e:BreakBlockEvent) : void {
+				var comboIndex:int = pm.gameModel.puzzleComboTable[PuzzleHelper.getHashKeyString(e.row, e.col)];
+				var i:int = 0;
+				var j:int = 0;
+				trace("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+				trace("Clicked");
+				trace (e.row +"," +e.col);
+				trace (comboIndex);
+				for (j = 0; j < config.boardCol; j++){
+					for (i = 0; i < config.boardRow; i++){
+						var hashKey:String = PuzzleHelper.getHashKeyString(i, j);
+						if (pm.gameModel.puzzleComboTable[hashKey] != null && 
+								pm.gameModel.puzzleComboTable[hashKey] == comboIndex){
+							trace("remove");
+							trace(hashKey);
+							removeBlock(hashKey);
+						}
+					}
+				}	
+				dropBlocks();
+				if (config.isDropStone){
+					addFullBlocks();
+				}else{
+					fullComboCheck();
+				}
+			}
+			
+			protected function removeBlock(key:String):void{
+				// Remove Block
+				var block:PuzzleBlock = pm.gameModel.blockObjectHash[key];
+				blocksPanel.removeChild(block);
+				// Clean Record
+				pm.gameModel.puzzleComboTable[key] = 
+					pm.gameModel.blockObjectHash[key] = pm.gameModel.blockMapList[key] = null;
+			}
+			
+			protected function dropBlocks():void{
+				var i:int = 0;
+				var j:int = 0;
+				var dropDoneList:Array = new Array();
+				for (j = 0; j < config.boardCol; j++){
+					for (i = 0; i < config.boardRow; i++){
+						var hashKey:String = PuzzleHelper.getHashKeyString(i, (config.boardCol - 1 - j));
+						if (pm.gameModel.blockObjectHash[hashKey] == null && dropDoneList.indexOf(i) == -1){
+							//the block is empty and we should fill it up
+							dropDoneList.push(i);
+							fillBlocksFromAbove(i, (config.boardCol - 1 - j));
+						}
+					}
+				}	
+			}
+			
+			protected function fillBlocksFromAbove(x:int, y:int):void{
+				var j:int = y;
+				var dropTo:int = y;
+				while (j >= 0){
+					var hashKey:String = PuzzleHelper.getHashKeyString(x, j);
+					if ( pm.gameModel.blockMapList[hashKey] != null ){
+						var fromKey:String = PuzzleHelper.getHashKeyString(x, j);
+						moveBlock(x, dropTo, fromKey);
+						dropTo--;
+					}
+					j--;
+				}
+			}
+			
+			public function moveBlock(toX:int, toY:int, fromKey:String):void{
+				var toKey:String = PuzzleHelper.getHashKeyString(toX, toY);
+				pm.gameModel.blockObjectHash[toKey] = pm.gameModel.blockObjectHash[fromKey];
+				pm.gameModel.blockMapList[toKey] = pm.gameModel.blockMapList[fromKey];
+				(pm.gameModel.blockObjectHash[fromKey] as PuzzleBlock).setPosition(toX, toY);
+				pm.gameModel.blockObjectHash[fromKey] = null;
+				pm.gameModel.blockMapList[fromKey] = null;
+			}
+			
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<parsley:Configure />
+	</fx:Declarations>
+	
+	<mx:Canvas id="background" backgroundColor="0xaaaaaa" width="100%" height="100%" />
+	<mx:Canvas id="blocksPanel" width="100%" height="100%" visible="{buildPuzzle(pm.compState.blockVisible)}"/>
+	<mx:Button id="clickBlocker" width="100%" height="100%" enabled="false" visible="{!pm.compState.blockEnable}"/>
+		
+</s:Group>
