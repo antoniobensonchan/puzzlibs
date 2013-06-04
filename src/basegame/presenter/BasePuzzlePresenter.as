@@ -31,11 +31,10 @@ package basegame.presenter
 				
 		public function BasePuzzlePresenter()
 		{
-//			setGameMode(BaseGameComponentStates.MODE_INVALID);
 		}
 		
 		[MessageHandler]
-		public function initBoard(e:InitBoardEvent):void{
+		public function initBoard(e:InitBoardEvent = null):void{
 			trace("init Board");
 			setGameMode(BaseGameComponentStates.MODE_INIT);
 		}
@@ -62,7 +61,7 @@ package basegame.presenter
 		}
 		
 		[MessageHandler]
-		public function buildPuzzle(event:BuildBlockEvent):void{
+		public function buildPuzzle(event:BuildBlockEvent = null):void{
 			setGameMode(BaseGameComponentStates.MODE_GET_READY);
 		}
 		
@@ -79,15 +78,11 @@ package basegame.presenter
 		}
 		
 		public function resetBoard():void{
-			
-		}
-		
-		public function cleanBoard():void{
-			
+			// Remove all Block, end Game
 		}
 		
 		public function destroyBoard():void{
-			
+			setGameMode(BaseGameComponentStates.MODE_INVALID);
 		}
 		
 		public function onBlockClick(e:MouseEvent):void{
