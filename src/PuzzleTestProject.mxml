@@ -13,8 +13,8 @@
 			import basegame.event.BuildBlockEvent;
 			import basegame.event.InitBoardEvent;
 			import basegame.event.SetDropBlockAvailEvent;
-			import basegame.event.SetGamePlayableEvent;
-			import basegame.event.TestEvent;
+			import basegame.event.StartGameEvent;
+			import basegame.presenter.BasePuzzlePresenter;
 			import basegame.util.BaseGameConfiguration;
 			
 			[MessageDispatcher]
@@ -23,15 +23,14 @@
 			[Inject]
 			public var config:BaseGameConfiguration;
 			
+			[Bindable]
+			[Inject]
+			public var pm:BasePuzzlePresenter;
+			
 			protected function button1_clickHandler(event:MouseEvent):void
 			{
 				// TODO Auto-generated method stub
 				trace("click");
-				sendMessage( new TestEvent());
-			}
-			
-			[MessageHandler]
-			public function testMsgHandler (event:TestEvent) : void {
 				testbtn.label = "done";
 				sendMessage( new InitBoardEvent());
 			}
@@ -45,13 +44,33 @@
 			protected function startGame_clickHandler(event:MouseEvent):void
 			{
 				// TODO Auto-generated method stub
-				sendMessage(new SetGamePlayableEvent(true));
+				sendMessage(new StartGameEvent(true));
 			}
 			
 			protected function dropStone_clickHandler(event:MouseEvent):void
 			{
 				// TODO Auto-generated method stub
 				sendMessage(new SetDropBlockAvailEvent(dropStone.selected));
+			}
+			
+			protected function destoryGame_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				pm.destroyBoard()
+			}
+			
+			
+			
+			protected function cleanPuzzle_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				pm.cleanBoard();
+			}
+			
+			protected function resetPuzzle_clickHandler(event:MouseEvent):void
+			{
+				// TODO Auto-generated method stub
+				pm.resetBoard();
 			}
 			
 		]]>
@@ -67,8 +86,10 @@
 	<s:Button id="testbtn" click="button1_clickHandler(event)" />
 	<s:Button id="buildBlock" label="Build" y="50" click="buildBlock_clickHandler(event)"/>
 	<s:Button id="startGame" label="Play" y="100" click="startGame_clickHandler(event)"/>
-	
 	<s:CheckBox id="dropStone" y="150" label="Drop Stone" click="dropStone_clickHandler(event)"/>
+	<s:Button id="destoryGame" label="Destory" y="200" click="destoryGame_clickHandler(event)"/>
+	<s:Button id="cleanPuzzle" label="Clean" y="250" click="cleanPuzzle_clickHandler(event)"/>
+	<s:Button id="resetPuzzle" label="Reset" y="300" click="resetPuzzle_clickHandler(event)"/>
 	
 	<Component:PuzzleBoard id="puzzleBoard"/>
 	

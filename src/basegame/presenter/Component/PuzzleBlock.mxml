@@ -23,8 +23,8 @@
 			public function setPosition(xPos:int, yPos:int):void{
 				posX = xPos;
 				posY = yPos;
-				this.x = xPos * this.width;
-				this.y = yPos * this.height;
+//				this.x = xPos * this.width;
+//				this.y = yPos * this.height;
 			}
 			
 			public function setBlockType(t:String):void{

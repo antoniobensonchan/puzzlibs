@@ -4,7 +4,7 @@ package basegame.presenter
 	import basegame.event.BuildBlockEvent;
 	import basegame.event.InitBoardEvent;
 	import basegame.event.SetDropBlockAvailEvent;
-	import basegame.event.SetGamePlayableEvent;
+	import basegame.event.StartGameEvent;
 	import basegame.model.PuzzleGameModel;
 	import basegame.presenter.Component.PuzzleBlock;
 	import basegame.util.BaseGameComponentStates;
@@ -36,7 +36,7 @@ package basegame.presenter
 		[MessageHandler]
 		public function initBoard(e:InitBoardEvent = null):void{
 			trace("init Board");
-			setGameMode(BaseGameComponentStates.MODE_INIT);
+			setGameMode(BaseGameComponentStates.MODE_INIT_READY);
 		}
 		
 		protected function setGameMode(mode:String):void{
@@ -48,21 +48,28 @@ package basegame.presenter
 					compState.puzzleBoardVisible = false;
 					compState.blockEnable = false;
 					break;
-				case BaseGameComponentStates.MODE_INIT:
+				case BaseGameComponentStates.MODE_INIT_READY:
 					compState.puzzleBoardVisible = true;
+					compState.blockVisible = false;
+					compState.blockEnable = false;
 					break;
-				case BaseGameComponentStates.MODE_GET_READY:
+				case BaseGameComponentStates.MODE_BLOCK_READY:
+					compState.puzzleBoardVisible = true;
 					compState.blockVisible = true;
+					compState.blockEnable = false;
 					break;
 				case BaseGameComponentStates.MODE_PLAY:
+					compState.puzzleBoardVisible = true;
+					compState.blockVisible = true;
 					compState.blockEnable = true;
+					
 					break;
 			}
 		}
 		
 		[MessageHandler]
 		public function buildPuzzle(event:BuildBlockEvent = null):void{
-			setGameMode(BaseGameComponentStates.MODE_GET_READY);
+			setGameMode(BaseGameComponentStates.MODE_BLOCK_READY);
 		}
 		
 		[MessageHandler]
@@ -71,14 +78,18 @@ package basegame.presenter
 		}
 		
 		[MessageHandler]
-		public function startGame(event:SetGamePlayableEvent):void{
-			if (event.canPlay == true){
-				setGameMode(BaseGameComponentStates.MODE_PLAY); 
-			}
+		public function startGame(event:StartGameEvent = null):void{
+			setGameMode(BaseGameComponentStates.MODE_PLAY); 
 		}
 		
 		public function resetBoard():void{
 			// Remove all Block, end Game
+			cleanBoard();
+			startGame();
+		}
+		
+		public function cleanBoard():void{
+			setGameMode(BaseGameComponentStates.MODE_INIT_READY);
 		}
 		
 		public function destroyBoard():void{
@@ -92,15 +103,7 @@ package basegame.presenter
 			breakBlocksCombo(row, col);
 		}
 		
-		public function addBlock(row:int, col:int):void{
-			
-		}
-		
 		public function moveBlock(toRow:int, toCol:int, fromRow:int = -1, fromCol:int = -1):void{
-			
-		}
-		
-		public function fillBlock():void{
 			
 		}
 		

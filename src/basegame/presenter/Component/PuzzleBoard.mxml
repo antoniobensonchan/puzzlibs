@@ -18,6 +18,8 @@
 			import basegame.util.BaseGameConfiguration;
 			import basegame.util.PuzzleHelper;
 			
+			import com.greensock.TweenLite;
+			
 			import flash.net.sendToURL;
 			
 			import mx.messaging.channels.StreamingAMFChannel;
@@ -49,7 +51,7 @@
 				if (bool){
 					addFullBlocks();
 				}else{
-					blocksPanel.removeAllChildren();
+					cleanPuzzle();
 				}
 				return bool;
 				
@@ -70,7 +72,6 @@
 					}
 				}	
 				fullComboCheck();
-
 			}
 			
 			private var comboIndex:int = 0;
@@ -142,6 +143,21 @@
 				pm.gameModel.blockObjectHash[hashKey] = block;
 				pm.gameModel.blockMapList[hashKey] = typeInt;
 				blocksPanel.addChild(block);
+				
+				moveBlockAni(block, block.posX, block.posY);
+			}
+			
+			private function moveBlockAni(block:PuzzleBlock, toRow:int, toCol:int, fromRow:int = -1, fromCol:int = -1):void{
+				var startX:int = ((fromRow == -1) ? toRow : fromRow) * block.width;
+				var startY:int = ((fromCol == -1) ? -(config.blockHeight) : fromCol) * block.height;
+				
+				var endX:int = toRow * block.width;
+				var endY:int = toCol * block.height;
+
+				block.x = startX;
+				block.y = startY;
+				var dur:int = (Math.abs(startX - endX) + Math.abs(startY - endY) ) / this.height *3;
+				TweenLite.to(block, dur, {x:endX, y:endY});
 			}
 			
 			private function getNewBlock(row:int, col:int, typeInt:Number):PuzzleBlock{
@@ -150,8 +166,16 @@
 				block.setConfig(pm.config, typeInt.toString());
 				block.setPosition(row, col);
 				block.addEventListener(MouseEvent.CLICK, pm.onBlockClick);
+				
+				block.addEventListener(Event.REMOVED, removeBlockListener);
 
 				return block;
+			}
+			
+			private function removeBlockListener(e:Event):void{
+				var block:PuzzleBlock = e.currentTarget as PuzzleBlock;
+				block.removeEventListener(MouseEvent.CLICK, pm.onBlockClick);
+				block.removeEventListener(Event.REMOVED, removeBlockListener);
 			}
 			
 			public function resetPuzzle():void{
@@ -159,7 +183,8 @@
 			}
 			
 			public function cleanPuzzle():void{
-				
+				blocksPanel.removeAllChildren();
+				pm.gameModel.initHash();
 			}
 			
 			[MessageHandler]
@@ -221,21 +246,24 @@
 				while (j >= 0){
 					var hashKey:String = PuzzleHelper.getHashKeyString(x, j);
 					if ( pm.gameModel.blockMapList[hashKey] != null ){
-						var fromKey:String = PuzzleHelper.getHashKeyString(x, j);
-						moveBlock(x, dropTo, fromKey);
+						moveBlock(x, dropTo, x, j);
 						dropTo--;
 					}
 					j--;
 				}
 			}
 			
-			public function moveBlock(toX:int, toY:int, fromKey:String):void{
+			public function moveBlock(toX:int, toY:int, fromX:int, fromY:int):void{
+				var fromKey:String = PuzzleHelper.getHashKeyString(fromX, fromY);
 				var toKey:String = PuzzleHelper.getHashKeyString(toX, toY);
 				pm.gameModel.blockObjectHash[toKey] = pm.gameModel.blockObjectHash[fromKey];
 				pm.gameModel.blockMapList[toKey] = pm.gameModel.blockMapList[fromKey];
-				(pm.gameModel.blockObjectHash[fromKey] as PuzzleBlock).setPosition(toX, toY);
+				var block:PuzzleBlock = (pm.gameModel.blockObjectHash[fromKey] as PuzzleBlock);
+				block.setPosition(toX, toY);
 				pm.gameModel.blockObjectHash[fromKey] = null;
 				pm.gameModel.blockMapList[fromKey] = null;
+				
+				moveBlockAni(block, toX, toY, fromX, fromY);
 			}
 			
 			
