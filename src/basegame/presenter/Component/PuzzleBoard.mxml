@@ -15,6 +15,7 @@
 			import basegame.event.BuildBlockEvent;
 			import basegame.event.DebugInfoUpdateEvent;
 			import basegame.presenter.BasePuzzlePresenter;
+			import basegame.task.IdleTask;
 			import basegame.util.BaseGameConfiguration;
 			import basegame.util.PuzzleHelper;
 			
@@ -24,6 +25,8 @@
 			
 			import mx.messaging.channels.StreamingAMFChannel;
 			import mx.utils.ObjectUtil;
+			
+			import org.spicefactory.lib.task.events.TaskEvent;
 			
 			[Bindable]
 			[Inject]
@@ -71,7 +74,23 @@
 						}
 					}
 				}	
+				startPlaceBlock();
 				fullComboCheck();
+			}
+			
+			protected function startPlaceBlock():void{
+				var i:int = 0;
+				var j:int = 0;
+				for (j = 0; j < config.boardCol; j++){
+					for (i = 0; i < config.boardRow; i++){
+						var hashKey:String = PuzzleHelper.getHashKeyString(i, j);
+						var block:PuzzleBlock = pm.gameModel.blockObjectHash[hashKey] as PuzzleBlock;
+						if(block.isNewBlock){
+							moveBlockAni(block, block.posX, block.posY);
+							block.isNewBlock = false;
+						}
+					}
+				}	
 			}
 			
 			private var comboIndex:int = 0;
@@ -144,19 +163,19 @@
 				pm.gameModel.blockMapList[hashKey] = typeInt;
 				blocksPanel.addChild(block);
 				
-				moveBlockAni(block, block.posX, block.posY);
+//				moveBlockAni(block, block.posX, block.posY);
 			}
 			
-			private function moveBlockAni(block:PuzzleBlock, toRow:int, toCol:int, fromRow:int = -1, fromCol:int = -1):void{
-				var startX:int = ((fromRow == -1) ? toRow : fromRow) * block.width;
-				var startY:int = ((fromCol == -1) ? -(config.blockHeight) : fromCol) * block.height;
-				
+			private function moveBlockAni(block:PuzzleBlock, toRow:int, toCol:int, fromRow:int = -1, fromCol:int = -1):void{			
 				var endX:int = toRow * block.width;
 				var endY:int = toCol * block.height;
+				
+				var startX:int = ((fromRow == -1) ? toRow : fromRow) * block.width;
+				var startY:int = ((fromCol == -1) ? (toCol - config.boardCol) : fromCol) * block.height;
 
 				block.x = startX;
 				block.y = startY;
-				var dur:int = (Math.abs(startX - endX) + Math.abs(startY - endY) ) / this.height *3;
+				var dur:Number = (Math.abs(startX - endX) + Math.abs(startY - endY) ) / this.height * 1.2;
 				TweenLite.to(block, dur, {x:endX, y:endY});
 			}
 			
@@ -207,12 +226,16 @@
 						}
 					}
 				}	
-				dropBlocks();
-				if (config.isDropStone){
-					addFullBlocks();
-				}else{
-					fullComboCheck();
-				}
+				var tk:IdleTask = new IdleTask(200); // configrable
+				tk.addEventListener(TaskEvent.COMPLETE, function():void{
+					dropBlocks();
+					if (config.isDropStone){
+						addFullBlocks();
+					}else{
+						fullComboCheck();
+					}
+				});
+				tk.start();
 			}
 			
 			protected function removeBlock(key:String):void{

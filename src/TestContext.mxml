@@ -1,7 +1,7 @@
 <fx:Object xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		   xmlns:s="library://ns.adobe.com/flex/spark" 
 		   xmlns:parsley="http://www.spicefactory.org/parsley"
-		   xmlns:model="basegame.model.*" xmlns:util="basegame.util.*" xmlns:presenter="basegame.presenter.*">
+		   xmlns:model="basegame.model.*" xmlns:util="basegame.util.*" xmlns:presenter="basegame.presenter.*" xmlns:task="basegame.task.*">
 	
 	
 	
@@ -10,7 +10,7 @@
 		<presenter:BasePuzzlePresenter/>
 		<util:BaseGameComponentStates/>
 		
-		<model:PuzzleGameModel/>		
+		<model:PuzzleGameModel/>			
 	</fx:Declarations>
 </fx:Object>
 	

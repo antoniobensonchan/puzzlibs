@@ -10,6 +10,7 @@
 			public var posX:int;
 			public var posY:int;
 			private var blockType:String;
+			public var isNewBlock:Boolean = true;
 			
 			private var config:BaseGameConfiguration;
 			
