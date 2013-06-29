@@ -15,6 +15,13 @@ package basegame.util
 		
 		public var blockType:int = 4;
 		
+		// TODO: may be we should separate static and non static items
+		public static var blockImageNameAry:Array = ["img1.png", "img2.png", "img3.png", "img4.png"];
+		public static var blockScoreAry:Array = [100, 150, 200, 250];
+		public static var comboBonus:Number = 1.1;
+		public static var minCombo:int = 3;
+
+		
 		public var isDropStone:Boolean = false;
 		
 		public function BaseGameConfiguration()

@@ -31,7 +31,8 @@
 			public function setBlockType(t:String):void{
 				blockType = t;
 //				this.text = blockType;
-				this.source = "skins/blocks/img"+blockType + ".png";
+				var filename:String = BaseGameConfiguration.blockImageNameAry[parseInt(blockType) - 1];
+				this.source = "skins/blocks/" + filename;
 
 			}
 		]]>
